@@ -1,27 +1,38 @@
-const express = require('express')
+const express = require('express');
+const cluster = require('cluster');
 const routes = require('./routes/route');
 const app = express();
 require('dotenv').config();
 
-app.use(express.json());
+const basePort = Number(process.env.port); // Base port for the application
 
-app.use((req, res, next) => {
-    //set headers to allow cross origin request.
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
+if (cluster.isMaster) {
+    const numWorkers = 3;
 
+    for (let i = 0; i < numWorkers; i++) {
+        cluster.fork();
+    }
 
-app.use('/api', routes);
-app.get('/', function(req,res){
-    res.send("Welcome");
-})
+    const loadBalancerApp = express();
+    const loadBalancerServer = loadBalancerApp.listen(basePort, () => {
+        console.log(`Load balancer listening on port ${basePort}`);
+    });
 
-const PORT = process.env.port || 4000;
-const server = app.listen(PORT, ()=> {
-    console.log(`Listening you at port ${PORT}, Stay Happy!`);
-})
+} else {
+    app.use(express.json());
 
-server.timeout = 300000;
+    app.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
+    
+    // Handle API routes
+    app.use('/api', routes);
+
+    const workerPort = basePort + cluster.worker.id;
+    const workerServer = app.listen(workerPort, () => {
+        console.log(`Worker ${cluster.worker.id} listening on port ${workerPort}`);
+    });
+}
