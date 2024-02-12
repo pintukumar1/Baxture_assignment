@@ -16,11 +16,12 @@ app.use((req, res, next) => {
 
 app.use('/api', routes);
 app.get('/', function(req,res){
-    res.send("success");
+    res.send("Welcome");
 })
 
-const server = app.listen(process.env.port, ()=> {
-    console.log(`Listening you at port ${process.env.port}, Stay Happy!`);
+const PORT = process.env.port || 4000;
+const server = app.listen(PORT, ()=> {
+    console.log(`Listening you at port ${PORT}, Stay Happy!`);
 })
 
 server.timeout = 300000;
