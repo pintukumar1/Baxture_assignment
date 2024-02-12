@@ -3,6 +3,7 @@ const routes = require('./routes/route');
 const app = express();
 require('dotenv').config();
 
+app.use(express.json());
 
 app.use((req, res, next) => {
     //set headers to allow cross origin request.
