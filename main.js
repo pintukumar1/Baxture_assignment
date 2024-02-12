@@ -1,8 +1,7 @@
 const express = require('express')
 const routes = require('./routes/route');
-require('custom-env').env(true)
-
 const app = express();
+require('dotenv').config();
 
 
 app.use((req, res, next) => {
